@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>congratulations พี่สาวคนสวยยยย</title>
+    <title> congratulations พี่สาวคนสวยยยย</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
         
@@ -139,7 +139,7 @@
 
         const gridSize = 20;
         const tileCount = 20; 
-        const targetScore = 100;
+        const targetScore = 1;
 
         let snake = [];
         let dx = 0; let dy = 0;
@@ -222,7 +222,7 @@
         function advanceSnake() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy }; snake.unshift(head);
             if (head.x === foodX && head.y === foodY) {
-                score += 20; scoreElement.innerText = score; spawnFood();
+                score += 5; scoreElement.innerText = score; spawnFood();
             } else snake.pop();
         }
         function spawnFood() {
@@ -270,10 +270,16 @@
             ctxCard.fillText('💐 congratulations  🎓', offScreenCanvas.width / 2, 700);
 
             // เนื้อหา
-            ctxCard.font = '45px Kanit, sans-serif';
-            ctxCard.fillStyle = '#2c3e50';
-            ctxCard.fillText('พี่อิ้งเก่งมากๆๆๆ', offScreenCanvas.width / 2, 820);
-            ctxCard.fillText('ยินดีด้วยนะพี่สาวคนเก่ง! จบแล้วน้าา ขอให้ก้าวต่อไปของพี่มีแต่ความสุขและรอยยิ้ม ขอให้ได้งานที่ใช่ เงินเดือนที่ชอบนะะ', offScreenCanvas.width / 2, 900);
+            // บรรทัดแรก (ชื่อพี่อิ้ง เน้นให้ใหญ่และหนาหน่อย)
+ctxCard.font = 'bold 50px Kanit, sans-serif';
+ctxCard.fillStyle = '#2c3e50';
+ctxCard.fillText('พี่อิ้งเก่งมากๆๆๆ!', offScreenCanvas.width / 2, 780);
+
+// คำอวยพร (ความยาวค่อนข้างมาก เลยแบ่งเป็น 3 บรรทัด ขนาดฟอนต์ 35px จะกำลังพอดีครับ)
+ctxCard.font = '35px Kanit, sans-serif';
+ctxCard.fillText('ยินดีด้วยนะพี่สาวคนเก่ง! จบแล้วน้าา', offScreenCanvas.width / 2, 850);
+ctxCard.fillText('ขอให้ก้าวต่อไปของพี่มีแต่ความสุขและรอยยิ้ม', offScreenCanvas.width / 2, 910);
+ctxCard.fillText('ขอให้ได้งานที่ใช่ เงินเดือนที่ชอบนะ ❤️', offScreenCanvas.width / 2, 970);
 
             // 5. แปลงรูปและสั่งดาวน์โหลด
             const link = document.createElement('a');
