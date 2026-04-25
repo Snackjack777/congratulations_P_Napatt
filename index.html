@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Snake! เกมนักศึกษางู</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Kanit', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 95vw;
+            max-width: 400px; 
+            aspect-ratio: 1 / 1;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            background-color: #ecf0f1;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #ecf0f1;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+        }
+
+        .screen h1 { font-size: 28px; margin-bottom: 10px; color: #f1c40f; }
+        .screen p { font-size: 16px; margin-bottom: 30px; padding: 0 15px; }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            font-family: 'Kanit', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            background: #3498db;
+            color: white;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        button:active { background: #2980b9; transform: scale(0.95); }
+        .btn-success { background: #27ae60; }
+        .btn-success:active { background: #219653; }
+
+        #score-board {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .hidden { display: none !important; }
+        
+        #mobile-hint {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            text-align: center;
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="position: relative; width: 95vw; max-width: 400px;">
+        <div id="score-board">หน่วยกิต: <span id="score">0</span> / 100</div>
+        
+        <div id="game-wrapper">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+            <div id="start-screen" class="screen">
+                <h1>เกมงู 🐍 สำหรับพี่สาวคนสวย</h1>
+                <p>💻 PC: ใช้ปุ่มลูกศร<br>📱 มือถือ: <b>ปัดหน้าจอ (Swipe)</b><br><br>เก็บหนังสือ 📘 ให้ครบ 100 หน่วยกิต!<br>รู้ว่าพี่ไม่ค่อยเล่นเกมผมเลยทำเกมง่ายๆมาให้ลอง</p>
+                <button onclick="startGame()">เริ่มเกม</button>
+            </div>
+
+            <div id="game-over-screen" class="screen hidden">
+                <h1 style="color: #e74c3c;">แตกกก 😭</h1>
+                <p>เอาใหม่พี่อีกนิดเดียว😄</p>
+                <button onclick="resetGame()">เริ่มใหม่</button>
+            </div>
+
+            <div id="win-screen" class="screen hidden">
+                <div style="background: white; padding: 20px; border-radius: 15px; text-align: center; color: #333; max-width: 80%; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                    <img id="reward-image" src="reward.png" alt="Reward" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px;">
+                    <h1 style="color: #f39c12; font-size: 22px; margin: 0 0 10px 0;">💐 congratulations 🎓</h1>
+                    <p style="font-size: 14px; margin: 0 0 15px 0;">พี่อิ้งเก่งมากๆๆๆๆ<br>ยินดีด้วยนะพี่สาวคนเก่ง! จบแล้วน้าา ขอให้ก้าวต่อไปของพี่มีแต่ความสุขและรอยยิ้ม ขอให้ได้งานที่ใช่ เงินเดือนที่ชอบนะ</p>
+                </div>
+                <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn-success" onclick="saveRewardCard()">💾 บันทึกรูป</button>
+                    <!-- <button onclick="resetGame()">เรียนต่อ ป.โท (เล่นอีกครั้ง)</button> -->
+                </div>
+            </div>
+        </div>
+        <div id="mobile-hint">ปัดหน้าจอ ซ้าย ขวา บน ล่าง เพื่อบังคับทิศทาง</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+
+        const gridSize = 20;
+        const tileCount = 20; 
+        const targetScore = 100;
+
+        let snake = [];
+        let dx = 0; let dy = 0;
+        let foodX; let foodY;
+        let score = 0;
+        let gameLoop;
+        let isGameRunning = false;
+
+        // ควบคุม PC
+        document.addEventListener("keydown", (event) => {
+            const LEFT_KEY = 37; const RIGHT_KEY = 39; const UP_KEY = 38; const DOWN_KEY = 40;
+            if([37, 38, 39, 40].includes(event.keyCode)) event.preventDefault();
+            if (event.keyCode === LEFT_KEY) changeDirectionManual(-1, 0);
+            if (event.keyCode === UP_KEY) changeDirectionManual(0, -1);
+            if (event.keyCode === RIGHT_KEY) changeDirectionManual(1, 0);
+            if (event.keyCode === DOWN_KEY) changeDirectionManual(0, 1);
+        });
+
+        // ควบคุม Mobile
+        let touchStartX = 0; let touchStartY = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, false);
+        document.addEventListener('touchend', e => {
+            handleSwipe(touchStartX, touchStartY, e.changedTouches[0].screenX, e.changedTouches[0].screenY);
+        }, false);
+
+        function handleSwipe(startX, startY, endX, endY) {
+            if (!isGameRunning) return;
+            let diffX = endX - startX; let diffY = endY - startY;
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 30) diffX > 0 ? changeDirectionManual(1, 0) : changeDirectionManual(-1, 0);
+            } else {
+                if (Math.abs(diffY) > 30) diffY > 0 ? changeDirectionManual(0, 1) : changeDirectionManual(0, -1);
+            }
+        }
+
+        function changeDirectionManual(newDx, newDy) {
+            const goingUp = dy === -1; const goingDown = dy === 1;
+            const goingRight = dx === 1; const goingLeft = dx === -1;
+            if (newDx === -1 && !goingRight) { dx = -1; dy = 0; }
+            if (newDy === -1 && !goingDown) { dx = 0; dy = -1; }
+            if (newDx === 1 && !goingLeft) { dx = 1; dy = 0; }
+            if (newDy === 1 && !goingUp) { dx = 0; dy = 1; }
+        }
+
+        function startGame() {
+            document.getElementById("start-screen").classList.add("hidden");
+            document.getElementById("game-over-screen").classList.add("hidden");
+            document.getElementById("win-screen").classList.add("hidden");
+            snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+            score = 0; scoreElement.innerText = score;
+            dx = 1; dy = 0; isGameRunning = true;
+            spawnFood();
+            if (gameLoop) clearInterval(gameLoop);
+            gameLoop = setInterval(main, 220); 
+        }
+
+        function main() {
+            if (hasGameEnded()) {
+                isGameRunning = false; clearInterval(gameLoop);
+                document.getElementById("game-over-screen").classList.remove("hidden"); return;
+            }
+            if (score >= targetScore) {
+                isGameRunning = false; clearInterval(gameLoop);
+                document.getElementById("win-screen").classList.remove("hidden"); return;
+            }
+            clearCanvas(); drawFood(); advanceSnake(); drawSnake();
+        }
+
+        function clearCanvas() { ctx.fillStyle = "#ecf0f1"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                ctx.fillStyle = index === 0 ? "#27ae60" : "#2ecc71"; ctx.strokeStyle = "#2c3e50";
+                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+                ctx.strokeRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+            });
+        }
+        function advanceSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy }; snake.unshift(head);
+            if (head.x === foodX && head.y === foodY) {
+                score += 5; scoreElement.innerText = score; spawnFood();
+            } else snake.pop();
+        }
+        function spawnFood() {
+            foodX = Math.floor(Math.random() * tileCount); foodY = Math.floor(Math.random() * tileCount);
+            snake.forEach(part => { if (part.x === foodX && part.y === foodY) spawnFood(); });
+        }
+        function drawFood() { ctx.font = "18px Arial"; ctx.fillText("📘", foodX * gridSize, foodY * gridSize + 16); }
+        function hasGameEnded() {
+            for (let i = 4; i < snake.length; i++) if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true;
+            return snake[0].x < 0 || snake[0].x >= tileCount || snake[0].y < 0 || snake[0].y >= tileCount;
+        }
+        function resetGame() { startGame(); }
+
+        // ---------------------------------------------------------
+        // ฟังก์ชันสำหรับสร้างการ์ดและบันทึกรูปภาพ
+        // ---------------------------------------------------------
+        function saveRewardCard() {
+            // สร้างกระดาษวาดรูปจำลองขนาด 1080x1080 (ขนาดสี่เหลี่ยมจัตุรัสแบบ IG)
+            const offScreenCanvas = document.createElement('canvas');
+            offScreenCanvas.width = 1080;
+            offScreenCanvas.height = 1080;
+            const ctxCard = offScreenCanvas.getContext('2d');
+
+            // 1. เทสีพื้นหลังขาว
+            ctxCard.fillStyle = '#ffffff';
+            ctxCard.fillRect(0, 0, offScreenCanvas.width, offScreenCanvas.height);
+
+            // 2. วาดกรอบสีเหลืองทอง
+            ctxCard.strokeStyle = '#f1c40f';
+            ctxCard.lineWidth = 40;
+            ctxCard.strokeRect(20, 20, offScreenCanvas.width - 40, offScreenCanvas.height - 40);
+
+            // 3. นำรูปภาพที่เตรียมไว้มาวาดใส่ตรงกลาง
+            const img = document.getElementById('reward-image');
+            const imgSize = 400; // ขนาดรูปภาพบนการ์ด
+            // วาดรูปให้อยู่ตรงกลางแนวนอน และห่างจากขอบบน 180px
+            ctxCard.drawImage(img, (offScreenCanvas.width - imgSize) / 2, 180, imgSize, imgSize);
+
+            // 4. เขียนข้อความอวยพร
+            ctxCard.textAlign = 'center';
+            
+            // หัวข้อ
+            ctxCard.font = 'bold 80px Kanit, sans-serif';
+            ctxCard.fillStyle = '#e67e22';
+            ctxCard.fillText('💐 congratulations  🎓', offScreenCanvas.width / 2, 700);
+
+            // เนื้อหา
+            ctxCard.font = '45px Kanit, sans-serif';
+            ctxCard.fillStyle = '#2c3e50';
+            ctxCard.fillText('คุณเก็บหน่วยกิตครบ 100 แล้ว!', offScreenCanvas.width / 2, 820);
+            ctxCard.fillText('ขอให้ประสบความสำเร็จในทุกๆ เรื่องนะ', offScreenCanvas.width / 2, 900);
+
+            // 5. แปลงรูปและสั่งดาวน์โหลด
+            const link = document.createElement('a');
+            link.download = 'Graduation_Reward.png'; // ชื่อไฟล์ที่จะถูกบันทึก
+            link.href = offScreenCanvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
