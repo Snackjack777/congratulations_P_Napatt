@@ -222,7 +222,7 @@
         function advanceSnake() {
             const head = { x: snake[0].x + dx, y: snake[0].y + dy }; snake.unshift(head);
             if (head.x === foodX && head.y === foodY) {
-                score += 5; scoreElement.innerText = score; spawnFood();
+                score += 20; scoreElement.innerText = score; spawnFood();
             } else snake.pop();
         }
         function spawnFood() {
